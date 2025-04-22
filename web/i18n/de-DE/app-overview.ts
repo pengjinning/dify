@@ -55,6 +55,7 @@ const translation = {
         chatColorThemeDesc: 'Legen Sie das Farbschema des Chatbots fest',
         chatColorThemeInverted: 'Invertiert',
         invalidHexMessage: 'Ungültiger Hex-Wert',
+        invalidPrivacyPolicy: 'Ungültiger Link zur Datenschutzrichtlinie. Bitte verwenden Sie einen gültigen Link, der mit http oder https beginnt',
         more: {
           entry: 'Mehr Einstellungen anzeigen',
           copyright: 'Urheberrecht',
@@ -65,6 +66,8 @@ const translation = {
           customDisclaimer: 'Benutzerdefinierte Haftungsausschluss',
           customDisclaimerPlaceholder: 'Geben Sie den benutzerdefinierten Haftungsausschluss-Text ein',
           customDisclaimerTip: 'Der ben userdefinierte Haftungsausschluss-Text wird auf der Clientseite angezeigt und bietet zusätzliche Informationen über die Anwendung',
+          copyrightTip: 'Copyright-Informationen in der Webapp anzeigen',
+          copyrightTooltip: 'Bitte führen Sie ein Upgrade auf den Professional-Plan oder höher durch',
         },
         sso: {
           title: 'WebApp-SSO',
@@ -72,6 +75,7 @@ const translation = {
           label: 'SSO-Authentifizierung',
           tooltip: 'Wenden Sie sich an den Administrator, um WebApp-SSO zu aktivieren',
         },
+        modalTip: 'Einstellungen für clientseitige Web-Apps.',
       },
       embedded: {
         entry: 'Eingebettet',
@@ -109,6 +113,7 @@ const translation = {
           operation: 'Dokumentation',
         },
       },
+      launch: 'Abschießen',
     },
     apiInfo: {
       title: 'Backend-Service-API',

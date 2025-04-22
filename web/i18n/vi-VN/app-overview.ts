@@ -55,6 +55,7 @@ const translation = {
         chatColorThemeDesc: 'Thiết lập giao diện màu của chatbot',
         chatColorThemeInverted: 'Đảo ngược',
         invalidHexMessage: 'Giá trị mã màu không hợp lệ',
+        invalidPrivacyPolicy: 'Liên kết chính sách bảo mật không hợp lệ. Vui lòng sử dụng liên kết hợp lệ bắt đầu bằng http hoặc https',
         more: {
           entry: 'Hiển thị thêm cài đặt',
           copyright: 'Bản quyền',
@@ -65,6 +66,8 @@ const translation = {
           customDisclaimer: 'Tuyên bố từ chối trách nhiệm tùy chỉnh',
           customDisclaimerPlaceholder: 'Nhập liên kết tuyên bố từ chối trách nhiệm',
           customDisclaimerTip: 'Liên kết này sẽ hiển thị ở phía người dùng, cung cấp thông tin về trách nhiệm của ứng dụng',
+          copyrightTip: 'Hiển thị thông tin bản quyền trong ứng dụng web',
+          copyrightTooltip: 'Vui lòng nâng cấp lên gói Professional trở lên',
         },
         sso: {
           title: 'SSO ứng dụng web',
@@ -72,6 +75,7 @@ const translation = {
           tooltip: 'Liên hệ với quản trị viên để bật SSO WebApp',
           label: 'Xác thực SSO',
         },
+        modalTip: 'Cài đặt ứng dụng web phía máy khách.',
       },
       embedded: {
         entry: 'Nhúng',
@@ -109,6 +113,7 @@ const translation = {
           operation: 'Tài liệu',
         },
       },
+      launch: 'Phóng',
     },
     apiInfo: {
       title: 'API dịch vụ backend',

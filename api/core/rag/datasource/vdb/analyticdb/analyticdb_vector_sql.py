@@ -3,8 +3,8 @@ import uuid
 from contextlib import contextmanager
 from typing import Any
 
-import psycopg2.extras
-import psycopg2.pool
+import psycopg2.extras  # type: ignore
+import psycopg2.pool  # type: ignore
 from pydantic import BaseModel, model_validator
 
 from core.rag.models.document import Document
@@ -75,6 +75,7 @@ class AnalyticdbVectorBySql:
 
     @contextmanager
     def _get_cursor(self):
+        assert self.pool is not None, "Connection pool is not initialized"
         conn = self.pool.getconn()
         cur = conn.cursor()
         try:
@@ -138,13 +139,17 @@ class AnalyticdbVectorBySql:
                 )
                 if embedding_dimension is not None:
                     index_name = f"{self._collection_name}_embedding_idx"
-                    cur.execute(f"ALTER TABLE {self.table_name} ALTER COLUMN vector SET STORAGE PLAIN")
-                    cur.execute(
-                        f"CREATE INDEX {index_name} ON {self.table_name} USING ann(vector) "
-                        f"WITH(dim='{embedding_dimension}', distancemeasure='{self.config.metrics}', "
-                        f"pq_enable=0, external_storage=0)"
-                    )
-                    cur.execute(f"CREATE INDEX ON {self.table_name} USING gin(to_tsvector)")
+                    try:
+                        cur.execute(f"ALTER TABLE {self.table_name} ALTER COLUMN vector SET STORAGE PLAIN")
+                        cur.execute(
+                            f"CREATE INDEX {index_name} ON {self.table_name} USING ann(vector) "
+                            f"WITH(dim='{embedding_dimension}', distancemeasure='{self.config.metrics}', "
+                            f"pq_enable=0, external_storage=0)"
+                        )
+                        cur.execute(f"CREATE INDEX ON {self.table_name} USING gin(to_tsvector)")
+                    except Exception as e:
+                        if "already exists" not in str(e):
+                            raise e
             redis_client.set(collection_exist_cache_key, 1, ex=3600)
 
     def add_texts(self, documents: list[Document], embeddings: list[list[float]], **kwargs):
@@ -156,16 +161,17 @@ class AnalyticdbVectorBySql:
                 VALUES (%s, %s, %s, %s, %s, to_tsvector('zh_cn',  %s));
             """
         for i, doc in enumerate(documents):
-            values.append(
-                (
-                    id_prefix + str(i),
-                    doc.metadata.get("doc_id", str(uuid.uuid4())),
-                    embeddings[i],
-                    doc.page_content,
-                    json.dumps(doc.metadata),
-                    doc.page_content,
+            if doc.metadata is not None:
+                values.append(
+                    (
+                        id_prefix + str(i),
+                        doc.metadata.get("doc_id", str(uuid.uuid4())),
+                        embeddings[i],
+                        doc.page_content,
+                        json.dumps(doc.metadata),
+                        doc.page_content,
+                    )
                 )
-            )
         with self._get_cursor() as cur:
             psycopg2.extras.execute_batch(cur, sql, values)
 
@@ -175,9 +181,11 @@ class AnalyticdbVectorBySql:
             return cur.fetchone() is not None
 
     def delete_by_ids(self, ids: list[str]) -> None:
+        if not ids:
+            return
         with self._get_cursor() as cur:
             try:
-                cur.execute(f"DELETE FROM {self.table_name} WHERE ref_doc_id IN %s", (tuple(ids),))
+                cur.execute(f"DELETE FROM {self.table_name} WHERE ref_doc_id = ANY(%s)", (ids,))
             except Exception as e:
                 if "does not exist" not in str(e):
                     raise e
@@ -192,6 +200,13 @@ class AnalyticdbVectorBySql:
 
     def search_by_vector(self, query_vector: list[float], **kwargs: Any) -> list[Document]:
         top_k = kwargs.get("top_k", 4)
+        if not isinstance(top_k, int) or top_k <= 0:
+            raise ValueError("top_k must be a positive integer")
+        document_ids_filter = kwargs.get("document_ids_filter")
+        where_clause = "WHERE 1=1"
+        if document_ids_filter:
+            document_ids = ", ".join(f"'{id}'" for id in document_ids_filter)
+            where_clause += f"AND metadata_->>'document_id' IN ({document_ids})"
         score_threshold = float(kwargs.get("score_threshold") or 0.0)
         with self._get_cursor() as cur:
             query_vector_str = json.dumps(query_vector)
@@ -200,7 +215,7 @@ class AnalyticdbVectorBySql:
                 f"SELECT t.id AS id, t.vector AS vector, (1.0 - t.score) AS score, "
                 f"t.page_content as page_content, t.metadata_ AS metadata_ "
                 f"FROM (SELECT id, vector, page_content, metadata_, vector <=> %s AS score "
-                f"FROM {self.table_name} ORDER BY score LIMIT {top_k} ) t",
+                f"FROM {self.table_name} {where_clause} ORDER BY score LIMIT {top_k} ) t",
                 (query_vector_str,),
             )
             documents = []
@@ -218,13 +233,20 @@ class AnalyticdbVectorBySql:
 
     def search_by_full_text(self, query: str, **kwargs: Any) -> list[Document]:
         top_k = kwargs.get("top_k", 4)
+        if not isinstance(top_k, int) or top_k <= 0:
+            raise ValueError("top_k must be a positive integer")
+        document_ids_filter = kwargs.get("document_ids_filter")
+        where_clause = ""
+        if document_ids_filter:
+            document_ids = ", ".join(f"'{id}'" for id in document_ids_filter)
+            where_clause += f"AND metadata_->>'document_id' IN ({document_ids})"
         with self._get_cursor() as cur:
             cur.execute(
                 f"""SELECT id, vector, page_content, metadata_, 
                 ts_rank(to_tsvector, to_tsquery_from_text(%s, 'zh_cn'), 32) AS score
                 FROM {self.table_name}
-                WHERE to_tsvector@@to_tsquery_from_text(%s, 'zh_cn')
-                ORDER BY score DESC
+                WHERE to_tsvector@@to_tsquery_from_text(%s, 'zh_cn') {where_clause}
+                ORDER BY score DESC, id DESC
                 LIMIT {top_k}""",
                 (f"'{query}'", f"'{query}'"),
             )

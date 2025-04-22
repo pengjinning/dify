@@ -55,6 +55,7 @@ const translation = {
         chatColorThemeDesc: 'Defina o tema de cor do chatbot',
         chatColorThemeInverted: 'Inve',
         invalidHexMessage: 'Valor hex inválido',
+        invalidPrivacyPolicy: 'Link de política de privacidade inválido. Por favor, use um link válido que comece com http ou https',
         more: {
           entry: 'Mostrar mais configurações',
           copyright: 'Direitos autorais',
@@ -65,6 +66,8 @@ const translation = {
           customDisclaimer: 'Aviso Legal Personalizado',
           customDisclaimerPlaceholder: 'Insira o texto do aviso legal',
           customDisclaimerTip: 'O texto do aviso legal personalizado será exibido no lado do cliente, fornecendo informações adicionais sobre o aplicativo',
+          copyrightTip: 'Exibir informações de direitos autorais no webapp',
+          copyrightTooltip: 'Por favor, atualize para o plano Professional ou superior',
         },
         sso: {
           tooltip: 'Entre em contato com o administrador para habilitar o SSO do WebApp',
@@ -72,6 +75,7 @@ const translation = {
           title: 'WebApp SSO',
           description: 'Todos os usuários devem fazer login com SSO antes de usar o WebApp',
         },
+        modalTip: 'Configurações do aplicativo Web do lado do cliente.',
       },
       embedded: {
         entry: 'Embutido',
@@ -109,6 +113,7 @@ const translation = {
           operation: 'Documentação',
         },
       },
+      launch: 'Lançar',
     },
     apiInfo: {
       title: 'API de Serviço de Back-end',
